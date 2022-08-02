@@ -67,7 +67,7 @@ function scrapAndWriteDengueDataScheduled() {
         every_minute: "*/1 * * * *",
         every_day: "0 0 */1 * *"           // (USE THIS) At 00:00 on every day-of-month.
     }
-    cron.schedule( time.every_20_second,  async () => {
+    cron.schedule( time.every_day,  async () => {
         await writeDengueData()
     })
 }
