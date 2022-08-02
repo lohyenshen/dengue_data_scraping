@@ -162,12 +162,15 @@ const scraperObject = {
 }
 // scrap and return the scrapped data
 async function getDengueDatas() {
-    try{
-        return await scraperObject.scrapeData()
-    }
-    catch (err){
-        console.log("Could not scrape dengue data", err);
-    }
+    // try{
+    //     return await scraperObject.scrapeData()
+    // }
+    // catch (err){
+    //     console.log("Could not scrape dengue data", err);
+    // }
+
+    // to explicitly throw an error when there's no new data on the dengue website
+    return await scraperObject.scrapeData()
 }
 // exports
 module.exports = {

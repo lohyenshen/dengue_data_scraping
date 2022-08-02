@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
 // https://www.npmjs.com/package/firebase
 const { initializeApp }         = require('firebase/app');
-const { getDatabase, ref, set } = require('firebase/database')
+const { getDatabase, ref, set, remove } = require('firebase/database')
 const { getDengueDatas }        = require('./dengue_scrap_code.js')
 const cron                      = require('node-cron')
 
@@ -39,27 +39,49 @@ function getNowDateTimeString() {
     let today = new Date()
     return today.toLocaleDateString( "en-GB", options).replaceAll("/", "-")
 }
-// main method to write data into firebase
-async function writeDengueData(){
+// perform checking & write data into firebase
+// https://stackoverflow.com/questions/38884522/why-is-my-asynchronous-function-returning-promise-pending-instead-of-a-val
+async function writeDengueDataToFirebase(){
     // debug
     // console.log('I am here')
 
-    // get dengue data from (dengue_scrap_code.js)
-    let datas = await getDengueDatas
+    // check if there's new data from dengue website
+    let hasNewDataFromDengueWebsite
+    let datas
+    try{
+        // get dengue data from (dengue_scrap_code.js)
+        datas = await getDengueDatas
 
-    // write into firebase
-    set(
-        ref(db, 'dengue_data/' + getNowDateTimeString()),
-        datas
-    )
+        // new dengue data is obtained without error
+        hasNewDataFromDengueWebsite = true
+    }
+    catch (err){
+        // error caught when getting new dengue data
+        hasNewDataFromDengueWebsite = false
+    }
 
-    // !!! IMPORTANT, dont delete this
-    // https://stackoverflow.com/questions/38884522/why-is-my-asynchronous-function-returning-promise-pending-instead-of-a-val
+    // write new dengue data to firebase
+    if (hasNewDataFromDengueWebsite){
+
+        // if no error thrown,
+        // there is previous dengue data in firebase AND it has been deleted successfully
+        try{
+            await remove(ref(db, 'dengue_data/'))
+        }
+        // if error thrown,
+        // there is no previous dengue data,
+        // HOWEVER, we will still write the latest data from idengue webstie
+        catch (err){}
+
+
+        // write into firebase
+        await set(
+            ref(db, 'dengue_data/' + getNowDateTimeString()),
+            datas
+        )
+    }
 }
-// exports
-module.exports = {
-    writeDengueData: writeDengueData()
-}
+// main()
 function scrapAndWriteDengueDataScheduled() {
     // cron scheduler
     let time = {
@@ -67,14 +89,13 @@ function scrapAndWriteDengueDataScheduled() {
         every_minute: "*/1 * * * *",
         every_day: "0 0 */1 * *"           // (USE THIS) At 00:00 on every day-of-month.
     }
-    cron.schedule( time.every_day,  async () => {
-        await writeDengueData()
+    cron.schedule( time.every_20_second,  async () => {
+        await writeDengueDataToFirebase()
     })
 }
 
 // main()
 scrapAndWriteDengueDataScheduled()
-
 
 
 
