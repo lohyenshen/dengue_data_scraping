@@ -42,7 +42,7 @@ function getNowDateTimeString() {
 // main method to write data into firebase
 async function writeDengueData(){
     // debug
-    console.log('I am here')
+    // console.log('I am here')
 
     // get dengue data from (dengue_scrap_code.js)
     let datas = await getDengueDatas
